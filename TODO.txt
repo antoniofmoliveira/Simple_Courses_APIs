@@ -1,0 +1,1 @@
+generalizar o config para todos os subprojetos

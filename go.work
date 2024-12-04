@@ -1,0 +1,12 @@
+go 1.23.3
+
+use (
+	./courses_db
+	./courses_entities
+	./flatbuffer_api
+	./graphql
+	./grpc_client
+	./grpc_server
+	./jsonapi
+	./proto
+)

@@ -1,0 +1,13 @@
+namespace fb;
+
+table Category {
+    id: string;
+    name: string;
+    description: string;
+}
+
+table Categories {
+    elements: [Category];
+}
+
+root_type Categories;
