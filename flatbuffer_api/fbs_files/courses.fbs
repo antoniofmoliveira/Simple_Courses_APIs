@@ -1,0 +1,16 @@
+namespace fb;
+
+table Course {
+    id: string;
+    name: string;
+    description: string;
+    category_id: string;
+}
+
+table Courses {
+    elements: [Course];
+}
+
+
+root_type Courses;
+

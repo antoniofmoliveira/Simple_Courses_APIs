@@ -1,0 +1,21 @@
+// gera arquivos golang
+flatc --go category.fbs
+
+// get all categories
+curl -H "Accept: application/octet-stream" http://localhost:8088/categories --output file0.bin
+
+
+// get one category
+curl -H "Accept: application/octet-stream" http://localhost:8088/categories/d7f11a84-bb8a-44fd-ad1e-69409c0d8b4d --output file1.bin
+
+
+// convert json to flatbuffer
+flatc -b category.fbs category.json 
+
+// send flatbuffer to server
+curl -X POST -H "Content-Type: application/octet-stream" -H "Accept: application/octet-stream" --data-binary @category.bin http://localhost:8088/categories --output saida.bin
+
+// convert flatbuffer to json
+flatc --raw-binary -t --strict-json fbs_files/message.fbs -- file1.bin 
+
+0fe1a399-c72b-42d2-893e-d2a43fa7577d

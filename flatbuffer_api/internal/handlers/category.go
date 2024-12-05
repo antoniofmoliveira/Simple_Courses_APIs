@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"io"
-	"log"
 	"net/http"
 
 	"github.com/antoniofmoliveira/courses/db/database"
@@ -23,136 +22,166 @@ func NewCategoryHandler(categoryDB database.CategoryRepositoryInterface) *Catego
 
 func (h *CategoryHandler) CreateCategory(w http.ResponseWriter, r *http.Request) {
 	if r.Header.Get("Content-Type") != "application/octet-stream" {
-		http.Error(w, "invalid content type", http.StatusUnsupportedMediaType)
+		sendFlatBufferMessage(w, "invalid content type", http.StatusUnsupportedMediaType)
 		return
 	}
 	if r.Header.Get("Accept") != "application/octet-stream" {
-		http.Error(w, "invalid accept header", http.StatusUnsupportedMediaType)
+		sendFlatBufferMessage(w, "invalid accept header", http.StatusUnsupportedMediaType)
 		return
 	}
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		sendFlatBufferMessage(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	defer r.Body.Close()
 
 	fbCategory := fb.GetRootAsCategory(body, 0)
 	categoryInputDto := dto.CategoryInputDto{
-		ID:   string(fbCategory.Id()),
-		Name: string(fbCategory.Name()),
+		ID:          string(fbCategory.Id()),
+		Name:        string(fbCategory.Name()),
+		Description: string(fbCategory.Description()),
 	}
 	categoryOutputDto, err := h.CategoryDB.Create(categoryInputDto)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		sendFlatBufferMessage(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/octet-stream")
 	w.WriteHeader(http.StatusCreated)
-	bb := flatbuffers.NewBuilder(0)
-	fb.CategoryStart(bb)
-	fb.CategoryAddId(bb, bb.CreateString(categoryOutputDto.ID))
-	fb.CategoryAddName(bb, bb.CreateString(categoryOutputDto.Name))
-	fbCategoryOutput := fb.CategoryEnd(bb)
-	bb.Finish(fbCategoryOutput)
-	w.Write(bb.FinishedBytes())
+	buf := categoryAsBytes(&categoryOutputDto)
+	w.Write(*buf)
+	// fbBuilder := flatbuffers.NewBuilder(0)
+	// id := fbBuilder.CreateString(categoryOutputDto.ID)
+	// name := fbBuilder.CreateString(categoryOutputDto.Name)
+	// description := fbBuilder.CreateString(categoryOutputDto.Description)
+	// fb.CategoryStart(fbBuilder)
+	// fb.CategoryAddId(fbBuilder, id)
+	// fb.CategoryAddName(fbBuilder, name)
+	// fb.CategoryAddDescription(fbBuilder, description)
+	// fbCategoryOutput := fb.CategoryEnd(fbBuilder)
+	// fbBuilder.Finish(fbCategoryOutput)
+	// w.Write(fbBuilder.FinishedBytes())
 }
 
 func (h *CategoryHandler) UpdateCategory(w http.ResponseWriter, r *http.Request) {
 	if r.Header.Get("Content-Type") != "application/octet-stream" {
-		http.Error(w, "invalid content type", http.StatusUnsupportedMediaType)
+		sendFlatBufferMessage(w, "invalid content type", http.StatusUnsupportedMediaType)
 		return
 	}
 	if r.Header.Get("Accept") != "application/octet-stream" {
-		http.Error(w, "invalid accept header", http.StatusUnsupportedMediaType)
+		sendFlatBufferMessage(w, "invalid accept header", http.StatusUnsupportedMediaType)
 		return
 	}
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		sendFlatBufferMessage(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	defer r.Body.Close()
 
 	fbCategory := fb.GetRootAsCategory(body, 0)
 	categoryInputDto := dto.CategoryInputDto{
-		ID:   string(fbCategory.Id()),
-		Name: string(fbCategory.Name()),
+		ID:          string(fbCategory.Id()),
+		Name:        string(fbCategory.Name()),
+		Description: string(fbCategory.Description()),
 	}
 	err = h.CategoryDB.Update(categoryInputDto)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		sendFlatBufferMessage(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/octet-stream")
-	w.WriteHeader(http.StatusOK)
-
+	sendFlatBufferMessage(w, "category updated", http.StatusOK)
 }
 
 func (h *CategoryHandler) FIndAllCategories(w http.ResponseWriter, r *http.Request) {
 	if r.Header.Get("Accept") != "application/octet-stream" {
-		http.Error(w, "invalid accept header", http.StatusUnsupportedMediaType)
+		sendFlatBufferMessage(w, "invalid accept header", http.StatusUnsupportedMediaType)
 		return
 	}
 
 	categories, err := h.CategoryDB.FindAll()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		sendFlatBufferMessage(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/octet-stream")
 	w.WriteHeader(http.StatusOK)
-	bb := flatbuffers.NewBuilder(1024)
-	var elements []flatbuffers.UOffsetT
-	for _, category := range categories.Categories {
-		id := bb.CreateString(category.ID)
-		name := bb.CreateString(category.Name)
-		fb.CategoryStart(bb)
-		fb.CategoryAddId(bb, id)
-		fb.CategoryAddName(bb, name)
-		fbCategory := fb.CategoryEnd(bb)
-		elements = append(elements, fbCategory)
-		elements = append(elements, bb.Offset())
-	}
-	fb.CategoriesStartElementsVector(bb, len(elements))
-	for i := len(elements) - 1; i >= 0; i-- {
-		bb.PrependUOffsetT(elements[i])
-	}
-	vec := bb.EndVector(len(elements))
+	fbBuilder := flatbuffers.NewBuilder(512)
 
-	fb.CategoriesStart(bb)
-	fb.CategoriesAddElements(bb, vec)
-	fbCategoriesOutput := fb.CategoriesEnd(bb)
-	bb.Finish(fbCategoriesOutput)
-	w.Write(bb.FinishedBytes())
+	elements := categoriesAsFlatBufferVector(fbBuilder, &categories.Categories)
+
+	fb.CategoriesStartElementsVector(fbBuilder, len(*elements))
+	for i := len(*elements) - 1; i >= 0; i-- {
+		fbBuilder.PrependUOffsetT((*elements)[i])
+	}
+	vec := fbBuilder.EndVector(len(*elements))
+
+	fb.CategoriesStart(fbBuilder)
+	fb.CategoriesAddElements(fbBuilder, vec)
+	fbCategoriesOutput := fb.CategoriesEnd(fbBuilder)
+	fbBuilder.Finish(fbCategoriesOutput)
+	w.Write(fbBuilder.FinishedBytes())
+}
+
+func categoriesAsFlatBufferVector(fbBuilder *flatbuffers.Builder, categories *[]dto.CategoryOutputDto) *[]flatbuffers.UOffsetT {
+	var elements []flatbuffers.UOffsetT
+	for _, category := range *categories {
+		id := fbBuilder.CreateString(category.ID)
+		name := fbBuilder.CreateString(category.Name)
+		description := fbBuilder.CreateString(category.Description)
+		fb.CategoryStart(fbBuilder)
+		fb.CategoryAddId(fbBuilder, id)
+		fb.CategoryAddName(fbBuilder, name)
+		fb.CategoryAddDescription(fbBuilder, description)
+		fbCategory := fb.CategoryEnd(fbBuilder)
+		elements = append(elements, fbCategory)
+		elements = append(elements, fbBuilder.Offset())
+	}
+	return &elements
 }
 
 func (h *CategoryHandler) FindCategory(w http.ResponseWriter, r *http.Request) {
 	if r.Header.Get("Accept") != "application/octet-stream" {
-		http.Error(w, "invalid accept header", http.StatusUnsupportedMediaType)
+		sendFlatBufferMessage(w, "invalid accept header", http.StatusUnsupportedMediaType)
 		return
 	}
 	id := r.PathValue("id")
-	log.Println(id)
+	// log.Println(id)
 	category, err := h.CategoryDB.Find(id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		sendFlatBufferMessage(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", "application/octet-stream")
 	w.WriteHeader(http.StatusOK)
-	bb := flatbuffers.NewBuilder(1024)
-	idr := bb.CreateString(category.ID)
-	name := bb.CreateString(category.Name)
-	fb.CategoryStart(bb)
-	fb.CategoryAddId(bb, idr)
-	fb.CategoryAddName(bb, name)
-	fbCategoryOutput := fb.CategoryEnd(bb)
-	bb.Finish(fbCategoryOutput)
-	w.Write(bb.FinishedBytes())
+	buf := categoryAsBytes(&category)
+	// bb := flatbuffers.NewBuilder(1024)
+	// idr := bb.CreateString(category.ID)
+	// name := bb.CreateString(category.Name)
+	// fb.CategoryStart(bb)
+	// fb.CategoryAddId(bb, idr)
+	// fb.CategoryAddName(bb, name)
+	// fbCategoryOutput := fb.CategoryEnd(bb)
+	// bb.Finish(fbCategoryOutput)
+	// w.Write(bb.FinishedBytes())
+	w.Write(*buf)
 }
 
-// curl -H "Accept: application/octet-stream" http://localhost:8088/categories/d7f11a84-bb8a-44fd-ad1e-69409c0d8b4d --output file1.bin
+func categoryAsBytes(category *dto.CategoryOutputDto) *[]byte {
+	bb := flatbuffers.NewBuilder(0)
+	id := bb.CreateString(category.ID)
+	name := bb.CreateString(category.Name)
+	description := bb.CreateString(category.Description)
+	fb.CategoryStart(bb)
+	fb.CategoryAddId(bb, id)
+	fb.CategoryAddName(bb, name)
+	fb.CategoryAddDescription(bb, description)
+	fbCategoryOutput := fb.CategoryEnd(bb)
+	bb.Finish(fbCategoryOutput)
+	buf := bb.FinishedBytes()
+	return &buf
+}

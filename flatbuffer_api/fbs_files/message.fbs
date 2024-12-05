@@ -1,0 +1,8 @@
+namespace fb;
+
+table Message {
+    is_success : bool;
+    message : string;
+}
+
+root_type Message;

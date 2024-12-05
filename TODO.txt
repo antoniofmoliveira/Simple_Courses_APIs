@@ -1,1 +1,23 @@
 generalizar o config para todos os subprojetos
+
+graphql client
+
+grpc implementation of update and delete for category
+grpc implementation of all for course
+grpc server authentication
+
+grpc client update to use all implementations
+
+jsonapi client
+
+flatbufferapi implementation of all for course
+flatbufferapi implementation of the rest for category
+flatbufferapi secure server and access
+
+flatbufferapi client
+
+cli implementation
+
+webserver implementation
+
+gui implementation

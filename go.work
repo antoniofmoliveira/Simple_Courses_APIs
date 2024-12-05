@@ -4,6 +4,7 @@ use (
 	./courses_db
 	./courses_entities
 	./flatbuffer_api
+	./flatbuffer_client
 	./graphql
 	./grpc_client
 	./grpc_server
