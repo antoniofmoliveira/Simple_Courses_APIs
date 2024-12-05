@@ -1,3 +1,4 @@
 *.pem
 *.sqlite
+*.bin
 .env

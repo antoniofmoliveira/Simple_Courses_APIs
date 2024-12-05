@@ -6,6 +6,7 @@ import (
 	"errors"
 
 	"github.com/antoniofmoliveira/courses/dto"
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/google/uuid"
 )
 
@@ -15,7 +16,7 @@ type Category struct {
 
 func NewCategory(db *sql.DB) *Category {
 	c := &Category{db: db}
-	c.db.Exec("CREATE TABLE IF NOT EXISTS categories (id TEXT PRIMARY KEY, name TEXT, description TEXT)")
+	c.db.Exec("CREATE TABLE IF NOT EXISTS categories (id CHAR(36) PRIMARY KEY, name TEXT, description TEXT)")
 	return c
 }
 
@@ -23,7 +24,7 @@ func (c *Category) Create(categoryDto dto.CategoryInputDto) (dto.CategoryOutputD
 	// func (c *Category) Create(name string, description string) (dto.CategoryOutputDto, error) {
 
 	id := uuid.New().String()
-	_, err := c.db.Exec("INSERT INTO categories (id, name, description) VALUES ($1, $2, $3)",
+	_, err := c.db.Exec("INSERT INTO categories (id, name, description) VALUES (?, ?, ?)",
 		id, categoryDto.Name, categoryDto.Description)
 	if err != nil {
 		return dto.CategoryOutputDto{}, err
@@ -50,7 +51,7 @@ func (c *Category) FindAll() (dto.CategoryListOutputDto, error) {
 
 func (c *Category) FindByCourseID(courseID string) (dto.CategoryOutputDto, error) {
 	var id, name, description string
-	err := c.db.QueryRow("SELECT c.id, c.name, c.description FROM categories c JOIN courses co ON c.id = co.category_id WHERE co.id = $1", courseID).
+	err := c.db.QueryRow("SELECT c.id, c.name, c.description FROM categories c JOIN courses co ON c.id = co.category_id WHERE co.id = ?", courseID).
 		Scan(&id, &name, &description)
 	if err != nil {
 		return dto.CategoryOutputDto{}, err
@@ -60,7 +61,7 @@ func (c *Category) FindByCourseID(courseID string) (dto.CategoryOutputDto, error
 
 func (c *Category) Find(id string) (dto.CategoryOutputDto, error) {
 	var name, description string
-	err := c.db.QueryRow("SELECT name, description FROM categories WHERE id = $1", id).
+	err := c.db.QueryRow("SELECT name, description FROM categories WHERE id = ?", id).
 		Scan(&name, &description)
 	if err != nil {
 		return dto.CategoryOutputDto{}, err
@@ -69,7 +70,7 @@ func (c *Category) Find(id string) (dto.CategoryOutputDto, error) {
 }
 
 func (c *Category) Update(category dto.CategoryInputDto) error {
-	_, err := c.db.Exec("UPDATE categories SET name = $1, description = $2 WHERE id = $3",
+	_, err := c.db.Exec("UPDATE categories SET name = ?, description = ? WHERE id = ?",
 		category.Name, category.Description, category.ID)
 	if err != nil {
 		return err
@@ -78,7 +79,7 @@ func (c *Category) Update(category dto.CategoryInputDto) error {
 }
 
 func (c *Category) Delete(id string) error {
-	query, err := c.db.Prepare("select count(*) from courses where category_id = $1")
+	query, err := c.db.Prepare("select count(*) from courses where category_id = ?")
 	if err != nil {
 		return err
 	}
@@ -90,7 +91,7 @@ func (c *Category) Delete(id string) error {
 	if count > 0 {
 		return errors.New("category has courses")
 	}
-	_, err = c.db.Exec("DELETE FROM categories WHERE id = $1", id)
+	_, err = c.db.Exec("DELETE FROM categories WHERE id = ?", id)
 	if err != nil {
 		return err
 	}

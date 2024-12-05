@@ -2,12 +2,14 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"net"
 
 	"github.com/antoniofmoliveira/courses/db/database"
 	"github.com/antoniofmoliveira/courses/grpcproto/pb"
 	"github.com/antoniofmoliveira/courses/grpcserver/internal/service"
+	"github.com/antoniofmoliveira/courses/grpcserver/internal/service/configs"
 	"google.golang.org/grpc/reflection"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -16,7 +18,12 @@ import (
 )
 
 func main() {
-	db, err := sql.Open("sqlite3", "./db.sqlite")
+	cfg, err := configs.LoadConfig(".")
+	if err != nil {
+		panic(err)
+	}
+	conn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", cfg.DBUser, cfg.DBPassword, cfg.DBHost, cfg.DBPort, cfg.DBName) 
+	db, err := sql.Open(cfg.DBDriver,conn)
 	if err != nil {
 		panic(err)
 	}

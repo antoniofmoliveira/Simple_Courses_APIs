@@ -24,7 +24,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	db, err := sql.Open("sqlite3", "./db.sqlite")
+	conn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", cfg.DBUser, cfg.DBPassword, cfg.DBHost, cfg.DBPort, cfg.DBName)
+	db, err := sql.Open(cfg.DBDriver, conn)
 	if err != nil {
 		log.Fatalf("failed to open database: %v", err)
 	}
