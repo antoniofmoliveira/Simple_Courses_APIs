@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -31,14 +32,11 @@ func main() {
 
 	fbCategoriesOutput := fb.GetRootAsCategories(body, 0)
 	log.Printf("categories: %d", fbCategoriesOutput.ElementsLength())
-	// for i := 0; i < fbCategoriesOutput.ElementsLength(); i++ {
-	category := new(fb.Category)
-	if fbCategoriesOutput.Elements(category, 0) {
-		id := string(category.Id())
-		name := string(category.Name())
-		description := string(category.Description())
-		log.Printf("category: id: %s, name: %s, description: %s", id, name, description)
+
+	for i := 0; i < fbCategoriesOutput.ElementsLength(); i++ {
+		var c fb.Category
+		fbCategoriesOutput.Elements(&c, i)
+		fmt.Printf("Category %d: id: %s, name: %s, description: %s\n", i, c.Id(), c.Name(), c.Description())
 	}
-	// }
 
 }

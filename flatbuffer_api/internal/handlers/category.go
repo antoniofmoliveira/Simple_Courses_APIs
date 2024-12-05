@@ -52,17 +52,6 @@ func (h *CategoryHandler) CreateCategory(w http.ResponseWriter, r *http.Request)
 	w.WriteHeader(http.StatusCreated)
 	buf := categoryAsBytes(&categoryOutputDto)
 	w.Write(*buf)
-	// fbBuilder := flatbuffers.NewBuilder(0)
-	// id := fbBuilder.CreateString(categoryOutputDto.ID)
-	// name := fbBuilder.CreateString(categoryOutputDto.Name)
-	// description := fbBuilder.CreateString(categoryOutputDto.Description)
-	// fb.CategoryStart(fbBuilder)
-	// fb.CategoryAddId(fbBuilder, id)
-	// fb.CategoryAddName(fbBuilder, name)
-	// fb.CategoryAddDescription(fbBuilder, description)
-	// fbCategoryOutput := fb.CategoryEnd(fbBuilder)
-	// fbBuilder.Finish(fbCategoryOutput)
-	// w.Write(fbBuilder.FinishedBytes())
 }
 
 func (h *CategoryHandler) UpdateCategory(w http.ResponseWriter, r *http.Request) {
@@ -139,7 +128,6 @@ func categoriesAsFlatBufferVector(fbBuilder *flatbuffers.Builder, categories *[]
 		fb.CategoryAddDescription(fbBuilder, description)
 		fbCategory := fb.CategoryEnd(fbBuilder)
 		elements = append(elements, fbCategory)
-		elements = append(elements, fbBuilder.Offset())
 	}
 	return &elements
 }
@@ -159,15 +147,6 @@ func (h *CategoryHandler) FindCategory(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/octet-stream")
 	w.WriteHeader(http.StatusOK)
 	buf := categoryAsBytes(&category)
-	// bb := flatbuffers.NewBuilder(1024)
-	// idr := bb.CreateString(category.ID)
-	// name := bb.CreateString(category.Name)
-	// fb.CategoryStart(bb)
-	// fb.CategoryAddId(bb, idr)
-	// fb.CategoryAddName(bb, name)
-	// fbCategoryOutput := fb.CategoryEnd(bb)
-	// bb.Finish(fbCategoryOutput)
-	// w.Write(bb.FinishedBytes())
 	w.Write(*buf)
 }
 
