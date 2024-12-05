@@ -1,6 +1,10 @@
 module github.com/antoniofmoliveira/courses/grpcproto
 
-go 1.23.3
+go 1.23.4
+
+replace github.com/antoniofmoliveira/courses/db => ../courses_db
+
+replace github.com/antoniofmoliveira/courses => ../courses_entities
 
 require (
 	google.golang.org/grpc v1.68.0

@@ -1,8 +1,17 @@
 module github.com/antoniofmoliveira/courses/grpcserver
 
-go 1.23.3
+go 1.23.4
+
+replace github.com/antoniofmoliveira/courses/db => ../courses_db
+
+replace github.com/antoniofmoliveira/courses => ../courses_entities
+
+replace github.com/antoniofmoliveira/courses/grpcproto => ../proto
 
 require (
+	github.com/antoniofmoliveira/courses v0.0.0-00010101000000-000000000000
+	github.com/antoniofmoliveira/courses/db v0.0.0-00010101000000-000000000000
+	github.com/antoniofmoliveira/courses/grpcproto v0.0.0-00010101000000-000000000000
 	github.com/go-chi/jwtauth v1.2.0
 	github.com/mattn/go-sqlite3 v1.14.24
 	github.com/spf13/viper v1.19.0
@@ -10,9 +19,12 @@ require (
 )
 
 require (
+	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/go-chi/chi v1.5.5 // indirect
+	github.com/go-sql-driver/mysql v1.8.1 // indirect
 	github.com/goccy/go-json v0.3.5 // indirect
+	github.com/google/uuid v1.6.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/lestrrat-go/backoff/v2 v2.0.7 // indirect
 	github.com/lestrrat-go/httpcc v1.0.0 // indirect
