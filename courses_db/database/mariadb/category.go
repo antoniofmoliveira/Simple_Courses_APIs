@@ -1,4 +1,4 @@
-package database
+package mariadb
 
 import (
 	"database/sql"
@@ -10,17 +10,17 @@ import (
 	"github.com/google/uuid"
 )
 
-type Category struct {
+type CategoryRepository struct {
 	db *sql.DB
 }
 
-func NewCategory(db *sql.DB) *Category {
-	c := &Category{db: db}
+func NewCategoryRepository(db *sql.DB) *CategoryRepository {
+	c := &CategoryRepository{db: db}
 	c.db.Exec("CREATE TABLE IF NOT EXISTS categories (id CHAR(36) PRIMARY KEY, name TEXT, description TEXT)")
 	return c
 }
 
-func (c *Category) Create(categoryDto dto.CategoryInputDto) (dto.CategoryOutputDto, error) {
+func (c *CategoryRepository) Create(categoryDto dto.CategoryInputDto) (dto.CategoryOutputDto, error) {
 	// func (c *Category) Create(name string, description string) (dto.CategoryOutputDto, error) {
 
 	id := uuid.New().String()
@@ -32,7 +32,7 @@ func (c *Category) Create(categoryDto dto.CategoryInputDto) (dto.CategoryOutputD
 	return dto.CategoryOutputDto{ID: id, Name: categoryDto.Name, Description: categoryDto.Description}, nil
 }
 
-func (c *Category) FindAll() (dto.CategoryListOutputDto, error) {
+func (c *CategoryRepository) FindAll() (dto.CategoryListOutputDto, error) {
 	rows, err := c.db.Query("SELECT id, name, description FROM categories")
 	if err != nil {
 		return dto.CategoryListOutputDto{}, err
@@ -49,7 +49,7 @@ func (c *Category) FindAll() (dto.CategoryListOutputDto, error) {
 	return categories, nil
 }
 
-func (c *Category) FindByCourseID(courseID string) (dto.CategoryOutputDto, error) {
+func (c *CategoryRepository) FindByCourseID(courseID string) (dto.CategoryOutputDto, error) {
 	var id, name, description string
 	err := c.db.QueryRow("SELECT c.id, c.name, c.description FROM categories c JOIN courses co ON c.id = co.category_id WHERE co.id = ?", courseID).
 		Scan(&id, &name, &description)
@@ -59,7 +59,7 @@ func (c *Category) FindByCourseID(courseID string) (dto.CategoryOutputDto, error
 	return dto.CategoryOutputDto{ID: id, Name: name, Description: description}, nil
 }
 
-func (c *Category) Find(id string) (dto.CategoryOutputDto, error) {
+func (c *CategoryRepository) Find(id string) (dto.CategoryOutputDto, error) {
 	var name, description string
 	err := c.db.QueryRow("SELECT name, description FROM categories WHERE id = ?", id).
 		Scan(&name, &description)
@@ -69,7 +69,7 @@ func (c *Category) Find(id string) (dto.CategoryOutputDto, error) {
 	return dto.CategoryOutputDto{ID: id, Name: name, Description: description}, nil
 }
 
-func (c *Category) Update(category dto.CategoryInputDto) error {
+func (c *CategoryRepository) Update(category dto.CategoryInputDto) error {
 	_, err := c.db.Exec("UPDATE categories SET name = ?, description = ? WHERE id = ?",
 		category.Name, category.Description, category.ID)
 	if err != nil {
@@ -78,7 +78,7 @@ func (c *Category) Update(category dto.CategoryInputDto) error {
 	return nil
 }
 
-func (c *Category) Delete(id string) error {
+func (c *CategoryRepository) Delete(id string) error {
 	query, err := c.db.Prepare("select count(*) from courses where category_id = ?")
 	if err != nil {
 		return err

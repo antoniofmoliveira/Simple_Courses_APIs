@@ -11,5 +11,3 @@ put `server_key.pem` and `server_cert.pem` in `x509` folder on **server**
 copy `server_cert.pem` to **client** as `ca_cert.pem` in `x509` folder
 
 update `hostname` in `client.go`
-
-

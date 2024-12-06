@@ -1,4 +1,4 @@
-package database
+package mariadb
 
 import (
 	"database/sql"
@@ -22,7 +22,7 @@ func NewUserRepository(db *sql.DB) *UserRepository {
 
 func (r *UserRepository) FindByEmail(email string) (*dto.GetJWTInput, error) {
 	var password string
-	err := r.db.QueryRow("SELECT password FROM users WHERE email = ?1", email).
+	err := r.db.QueryRow("SELECT password FROM users WHERE email = ?", email).
 		Scan(&password)
 	if err != nil {
 		return nil, err

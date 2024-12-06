@@ -7,6 +7,6 @@ import "github.com/antoniofmoliveira/courses/db/database"
 // It serves as dependency injection for your app, add any dependencies you require here.
 
 type Resolver struct {
-	CategoryDB *database.Category
-	CourseDB   *database.Course
+	CategoryDB database.CategoryRepositoryInterface
+	CourseDB   database.CourseRepositoryInterface
 }

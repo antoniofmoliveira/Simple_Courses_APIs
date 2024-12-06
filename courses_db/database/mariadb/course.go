@@ -1,19 +1,18 @@
-package database
+package mariadb
 
 import (
 	"database/sql"
 
 	"github.com/antoniofmoliveira/courses/dto"
-	"github.com/google/uuid"
 	_ "github.com/go-sql-driver/mysql"
-
+	"github.com/google/uuid"
 )
 
 type Course struct {
 	db *sql.DB
 }
 
-func NewCourse(db *sql.DB) *Course {
+func NewCourseRepository(db *sql.DB) *Course {
 	c := &Course{db: db}
 	c.db.Exec("CREATE TABLE IF NOT EXISTS courses (id CHAR(36) PRIMARY KEY, name TEXT, description TEXT, category_id TEXT)")
 	return c

@@ -2,9 +2,7 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
-	"log"
 	"log/slog"
 	"net/http"
 	"os"
@@ -24,16 +22,11 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	conn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", cfg.DBUser, cfg.DBPassword, cfg.DBHost, cfg.DBPort, cfg.DBName)
-	db, err := sql.Open(cfg.DBDriver, conn)
-	if err != nil {
-		log.Fatalf("failed to open database: %v", err)
-	}
-	defer db.Close()
 
-	categoryDb := database.NewCategory(db)
-	// courseDb := database.NewCourse(db)
-	// userDB := database.NewUserRepository(db)
+	dbi := database.GetDBImplementation()
+	categoryDb := dbi.CategoryRepository
+	// courseDb := dbi.CourseRepository
+	// userDB := dbi.UserRepository
 
 	// // public middlewares
 	// public := func(next http.Handler) http.Handler {
@@ -88,5 +81,3 @@ func main() {
 	slog.Info("Server stopped")
 	os.Exit(0)
 }
-
-// curl -H "Accept: application/octet-stream" http://localhost:8080/categories
