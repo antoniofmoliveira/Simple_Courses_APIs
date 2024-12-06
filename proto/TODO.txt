@@ -1,0 +1,3 @@
+generate new rpc files
+
+protoc --go_out=. --go-grpc_out=. course_category.proto

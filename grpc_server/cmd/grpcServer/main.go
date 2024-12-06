@@ -19,6 +19,7 @@ func main() {
 	dbi := database.GetDBImplementation()
 	
 	categoryService := service.NewCategoryService(dbi.CategoryRepository)
+	courseService := service.NewCourseService(dbi.CourseRepository)
 
 	// with authentication
 	creds, err := credentials.NewServerTLSFromFile("x509/server_cert.pem", "x509/server_key.pem")
@@ -32,6 +33,7 @@ func main() {
 	// grpcServer := grpc.NewServer()
 
 	pb.RegisterCategoryServiceServer(grpcServer, categoryService)
+	pb.RegisterCourseServiceServer(grpcServer, courseService)
 	reflection.Register(grpcServer)
 
 	lis, err := net.Listen("tcp", ":50051")
