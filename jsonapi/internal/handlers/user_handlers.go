@@ -34,14 +34,14 @@ func (h *UserHandler) GetJwt(w http.ResponseWriter, r *http.Request) {
 	jwt := r.Context().Value("jwt").(*jwtauth.JWTAuth)
 	jwtExpiresIn := r.Context().Value("jwtExpiresIn").(int)
 
-	var userdto dto.GetJWTInput
-	err := json.NewDecoder(r.Body).Decode(&userdto)
+	var userCredentials dto.GetJWTInput
+	err := json.NewDecoder(r.Body).Decode(&userCredentials)
 	if err != nil {
 		json.NewEncoder(w).Encode(Error{Message: err.Error()})
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	dtoUser, err := h.UserDB.FindByEmail(userdto.Email)
+	userFromDb, err := h.UserDB.FindByEmail(userCredentials.Email)
 
 	if err != nil {
 		json.NewEncoder(w).Encode(Error{Message: err.Error()})
@@ -49,20 +49,19 @@ func (h *UserHandler) GetJwt(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	entityUser, err := entity.NewUser("", dtoUser.Email, dtoUser.Password)
-
-	if err != nil {
-		json.NewEncoder(w).Encode(Error{Message: err.Error()})
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+	entityUser := entity.User{
+		ID:       "",
+		Email:    userFromDb.Email,
+		Password: userFromDb.Password,
 	}
-	if !entityUser.ValidatePassword(userdto.Password) {
+
+	if !entityUser.ValidatePassword(userCredentials.Password) {
 		json.NewEncoder(w).Encode(Error{Message: "Invalid credentials"})
 		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
 		return
 	}
 	_, tokenString, _ := jwt.Encode(map[string]interface{}{
-		"sub": entityUser.ID,
+		"sub": entityUser.Email,
 		"exp": time.Now().Add(time.Second * time.Duration(jwtExpiresIn)).Unix(),
 	})
 
