@@ -24,9 +24,9 @@ func main() {
 	}
 
 	dbi := database.GetDBImplementation()
-	categoryDb := dbi.CategoryRepository
-	// courseDb := dbi.CourseRepository
-	// userDB := dbi.UserRepository
+	categoryRepository := dbi.CategoryRepository
+	courseRepository := dbi.CourseRepository
+	userRepository := dbi.UserRepository
 
 	// // public middlewares
 	// public := func(next http.Handler) http.Handler {
@@ -45,14 +45,32 @@ func main() {
 	// }
 	r := http.NewServeMux()
 
-	categoryHandler := handlers.NewCategoryHandler(categoryDb)
-	// courseHandler := handlers.NewCourseHandler(courseDb)
-	// userHandler := handlers.NewUserHandler(userDB)
+	categoryHandler := handlers.NewCategoryHandler(categoryRepository)
+	courseHandler := handlers.NewCourseHandler(courseRepository)
+	userHandler := handlers.NewUserHandler(userRepository)
 
-	r.HandleFunc("GET /categories", categoryHandler.FIndAllCategories)
-	r.HandleFunc("GET /categorieserror", categoryHandler.CategoriesError)
+	r.HandleFunc("GET /categories", categoryHandler.FindAllCategories)
 	r.HandleFunc("GET /categories/{id}", categoryHandler.FindCategory)
 	r.HandleFunc("POST /categories", categoryHandler.CreateCategory)
+	r.HandleFunc("PUT /categories/{id}", categoryHandler.UpdateCategory)
+	r.HandleFunc("DELETE /categories/{id}", categoryHandler.DeleteCategory)
+
+	r.HandleFunc("GET /courses", courseHandler.FindAllCourses)
+	r.HandleFunc("GET /courses/{id}", courseHandler.FindCourse)
+	r.HandleFunc("POST /courses", courseHandler.CreateCourse)
+	r.HandleFunc("PUT /courses/{id}", courseHandler.UpdateCourse)
+	r.HandleFunc("DELETE /courses/{id}", courseHandler.DeleteCourse)
+
+	r.HandleFunc("GET /users", userHandler.FindAllUsers)
+	r.HandleFunc("GET /users/{id}", userHandler.FindUser)
+	r.HandleFunc("POST /users", userHandler.CreateUser)
+	r.HandleFunc("PUT /users/{id}", userHandler.UpdateUser)
+	r.HandleFunc("DELETE /users/{id}", userHandler.DeleteUser)
+
+	r.HandleFunc("GET /jwt", userHandler.GetJWT)
+
+	// TODO! only for test - REMOVE! in production
+	r.HandleFunc("GET /categorieserror", categoryHandler.CategoriesError)
 
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":%s", cfg.WebServerPort),

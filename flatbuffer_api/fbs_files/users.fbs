@@ -1,0 +1,29 @@
+namespace fb;
+
+table UserInput {
+    id: string;
+    name: string;
+    email: string;
+    password: string;
+}
+
+table UserCredentials {
+    email: string;
+    password: string;
+}
+
+table JWTToken {
+    token: string;
+}
+
+table UserOutput {
+    id: string;
+    name: string;
+    email: string;
+}
+
+table UserListOutput {
+    elements: [UserOutput];
+}
+
+root_type UserListOutput;

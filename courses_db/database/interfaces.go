@@ -21,6 +21,10 @@ type CategoryRepositoryInterface interface {
 }
 
 type UserRepositoryInterface interface {
-	Create(user *dto.CreateUserInput) error
+	Create(user dto.UserInputDto) (dto.UserOutputDto, error)
 	FindByEmail(email string) (*dto.GetJWTInput, error)
+	FindAll() (dto.UserListOutputDto, error)
+	Find(id string) (dto.UserOutputDto, error)
+	Update(user dto.UserInputDto) error
+	Delete(id string) error
 }

@@ -7,6 +7,8 @@ import (
 	flatbuffers "github.com/google/flatbuffers/go"
 )
 
+const octetStream = "application/octet-stream"
+
 func sendFlatBufferMessage(w http.ResponseWriter, message string, httpStatus int) {
 	fbBuilder := flatbuffers.NewBuilder(0)
 	fbMessage := fbBuilder.CreateString(message)

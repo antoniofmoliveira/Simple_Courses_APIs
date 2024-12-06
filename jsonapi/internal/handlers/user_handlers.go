@@ -88,7 +88,7 @@ func (h *UserHandler) GetJwt(w http.ResponseWriter, r *http.Request) {
 // @Router       /users [post]
 // @Security     ApiKeyAuth
 func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
-	var userdto dto.CreateUserInput
+	var userdto dto.UserInputDto
 	err := json.NewDecoder(r.Body).Decode(&userdto)
 	if err != nil {
 		json.NewEncoder(w).Encode(Error{Message: err.Error()})
@@ -102,7 +102,7 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	err = h.UserDB.Create(&dto.CreateUserInput{
+	_, err = h.UserDB.Create(dto.UserInputDto{
 		Name:     entityUser.Name,
 		Email:    entityUser.Email,
 		Password: entityUser.Password,

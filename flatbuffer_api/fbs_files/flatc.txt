@@ -18,4 +18,4 @@ curl -X POST -H "Content-Type: application/octet-stream" -H "Accept: application
 // convert flatbuffer to json
 flatc --raw-binary -t --strict-json fbs_files/message.fbs -- file1.bin 
 
-0fe1a399-c72b-42d2-893e-d2a43fa7577d
+flatc --go fbs_files/users.fbs

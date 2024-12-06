@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"io"
+	"log/slog"
 	"net/http"
 
 	"github.com/antoniofmoliveira/courses/db/database"
@@ -11,26 +12,41 @@ import (
 )
 
 type CategoryHandler struct {
-	CategoryDB database.CategoryRepositoryInterface
+	CategoryRepository database.CategoryRepositoryInterface
 }
 
 func NewCategoryHandler(categoryDB database.CategoryRepositoryInterface) *CategoryHandler {
 	return &CategoryHandler{
-		CategoryDB: categoryDB,
+		CategoryRepository: categoryDB,
 	}
 }
 
 func (h *CategoryHandler) CreateCategory(w http.ResponseWriter, r *http.Request) {
-	if r.Header.Get("Content-Type") != "application/octet-stream" {
+	w.Header().Set("Content-Type", octetStream)
+
+	defer func() {
+		if err := recover(); err != nil {
+			slog.Info("createCategory", "msg", "unexpected payload")
+			slog.Error("createCategory", "msg", err)
+			sendFlatBufferMessage(w, err.(error).Error(), http.StatusInternalServerError)
+		}
+	}()
+
+	if r.Header.Get("Content-Type") != octetStream {
+		slog.Error("createCategory", "msg", "invalid content type")
 		sendFlatBufferMessage(w, "invalid content type", http.StatusUnsupportedMediaType)
 		return
 	}
-	if r.Header.Get("Accept") != "application/octet-stream" {
+
+	if r.Header.Get("Accept") != octetStream {
+		slog.Error("createCategory", "msg", "invalid accept header")
 		sendFlatBufferMessage(w, "invalid accept header", http.StatusUnsupportedMediaType)
 		return
 	}
+
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
+		slog.Error("createCategory", "msg", err)
 		sendFlatBufferMessage(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -42,29 +58,47 @@ func (h *CategoryHandler) CreateCategory(w http.ResponseWriter, r *http.Request)
 		Name:        string(fbCategory.Name()),
 		Description: string(fbCategory.Description()),
 	}
-	categoryOutputDto, err := h.CategoryDB.Create(categoryInputDto)
+
+	categoryOutputDto, err := h.CategoryRepository.Create(categoryInputDto)
 	if err != nil {
+		slog.Error("createCategory", "msg", err)
 		sendFlatBufferMessage(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/octet-stream")
 	w.WriteHeader(http.StatusCreated)
 	buf := categoryAsBytes(&categoryOutputDto)
 	w.Write(*buf)
+
+	slog.Info("createCategory", "msg", "category created", "id", categoryOutputDto.ID)
 }
 
 func (h *CategoryHandler) UpdateCategory(w http.ResponseWriter, r *http.Request) {
-	if r.Header.Get("Content-Type") != "application/octet-stream" {
+	w.Header().Set("Content-Type", octetStream)
+
+	defer func() {
+		if err := recover(); err != nil {
+			slog.Info("updateCategory", "msg", "unexpected payload")
+			slog.Error("updateCategory", "msg", err)
+			sendFlatBufferMessage(w, err.(error).Error(), http.StatusInternalServerError)
+		}
+	}()
+
+	if r.Header.Get("Content-Type") != octetStream {
+		slog.Error("updateCategory", "msg", "invalid content type")
 		sendFlatBufferMessage(w, "invalid content type", http.StatusUnsupportedMediaType)
 		return
 	}
-	if r.Header.Get("Accept") != "application/octet-stream" {
+
+	if r.Header.Get("Accept") != octetStream {
+		slog.Error("updateCategory", "msg", "invalid accept header")
 		sendFlatBufferMessage(w, "invalid accept header", http.StatusUnsupportedMediaType)
 		return
 	}
+
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
+		slog.Error("updateCategory", "msg", err)
 		sendFlatBufferMessage(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -76,30 +110,36 @@ func (h *CategoryHandler) UpdateCategory(w http.ResponseWriter, r *http.Request)
 		Name:        string(fbCategory.Name()),
 		Description: string(fbCategory.Description()),
 	}
-	err = h.CategoryDB.Update(categoryInputDto)
+
+	err = h.CategoryRepository.Update(categoryInputDto)
 	if err != nil {
+		slog.Error("updateCategory", "msg", err)
 		sendFlatBufferMessage(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	sendFlatBufferMessage(w, "category updated", http.StatusOK)
+
+	slog.Info("updateCategory", "msg", "category updated", "id", categoryInputDto.ID)
 }
 
-func (h *CategoryHandler) FIndAllCategories(w http.ResponseWriter, r *http.Request) {
-	if r.Header.Get("Accept") != "application/octet-stream" {
+func (h *CategoryHandler) FindAllCategories(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", octetStream)
+
+	if r.Header.Get("Accept") != octetStream {
+		slog.Error("FindAllCategories", "msg", "invalid accept header")
 		sendFlatBufferMessage(w, "invalid accept header", http.StatusUnsupportedMediaType)
 		return
 	}
 
-	categories, err := h.CategoryDB.FindAll()
+	categories, err := h.CategoryRepository.FindAll()
 	if err != nil {
+		slog.Error("FindAllCategories", "msg", err)
 		sendFlatBufferMessage(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/octet-stream")
-	w.WriteHeader(http.StatusOK)
-	fbBuilder := flatbuffers.NewBuilder(512)
+	fbBuilder := flatbuffers.NewBuilder(0)
 
 	elements := categoriesAsFlatBufferVector(fbBuilder, &categories.Categories)
 
@@ -113,7 +153,11 @@ func (h *CategoryHandler) FIndAllCategories(w http.ResponseWriter, r *http.Reque
 	fb.CategoriesAddElements(fbBuilder, vec)
 	fbCategoriesOutput := fb.CategoriesEnd(fbBuilder)
 	fbBuilder.Finish(fbCategoriesOutput)
+
+	w.WriteHeader(http.StatusOK)
 	w.Write(fbBuilder.FinishedBytes())
+
+	slog.Info("FindAllCategories", "msg", "categories found", "count", len(categories.Categories))
 }
 
 func categoriesAsFlatBufferVector(fbBuilder *flatbuffers.Builder, categories *[]dto.CategoryOutputDto) *[]flatbuffers.UOffsetT {
@@ -133,21 +177,28 @@ func categoriesAsFlatBufferVector(fbBuilder *flatbuffers.Builder, categories *[]
 }
 
 func (h *CategoryHandler) FindCategory(w http.ResponseWriter, r *http.Request) {
-	if r.Header.Get("Accept") != "application/octet-stream" {
+	w.Header().Set("Content-Type", octetStream)
+
+	if r.Header.Get("Accept") != octetStream {
+		slog.Error("FindCategory", "msg", "invalid accept header")
 		sendFlatBufferMessage(w, "invalid accept header", http.StatusUnsupportedMediaType)
 		return
 	}
+
 	id := r.PathValue("id")
-	// log.Println(id)
-	category, err := h.CategoryDB.Find(id)
+
+	category, err := h.CategoryRepository.Find(id)
 	if err != nil {
+		slog.Error("FindCategory", "msg", err)
 		sendFlatBufferMessage(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "application/octet-stream")
+
 	w.WriteHeader(http.StatusOK)
 	buf := categoryAsBytes(&category)
 	w.Write(*buf)
+
+	slog.Info("FindCategory", "msg", "category found", "id", id)
 }
 
 func categoryAsBytes(category *dto.CategoryOutputDto) *[]byte {
@@ -163,4 +214,27 @@ func categoryAsBytes(category *dto.CategoryOutputDto) *[]byte {
 	bb.Finish(fbCategoryOutput)
 	buf := bb.FinishedBytes()
 	return &buf
+}
+
+func (h *CategoryHandler) DeleteCategory(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", octetStream)
+
+	if r.Header.Get("Accept") != octetStream {
+		slog.Error("DeleteCategory", "msg", "invalid accept header")
+		sendFlatBufferMessage(w, "invalid accept header", http.StatusUnsupportedMediaType)
+		return
+	}
+
+	id := r.PathValue("id")
+
+	err := h.CategoryRepository.Delete(id)
+	if err != nil {
+		slog.Error("DeleteCategory", "msg", err)
+		sendFlatBufferMessage(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	sendFlatBufferMessage(w, "category deleted", http.StatusOK)
+
+	slog.Info("DeleteCategory", "msg", "category deleted", "id", id)
 }
