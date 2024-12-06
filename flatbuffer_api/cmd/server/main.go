@@ -50,6 +50,7 @@ func main() {
 	// userHandler := handlers.NewUserHandler(userDB)
 
 	r.HandleFunc("GET /categories", categoryHandler.FIndAllCategories)
+	r.HandleFunc("GET /categorieserror", categoryHandler.CategoriesError)
 	r.HandleFunc("GET /categories/{id}", categoryHandler.FindCategory)
 	r.HandleFunc("POST /categories", categoryHandler.CreateCategory)
 
