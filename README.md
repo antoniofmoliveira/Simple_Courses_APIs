@@ -1,4 +1,25 @@
-# gRPC Client and Server with TLS Authentication in Golang using streams
+# Simple User, Course and Category API
+
+## ***in progress***
+
+very dificult to find information about flatbuffers and grpc streams
+
+## serveral ways to implement the API
+
+- using golang workspace
+- use of mariadb or sqlite databases
+
+- generating certificates
+- authentication and authorization
+- use jwttoken
+- multiple middlewares
+- json api
+- grpc api
+- flatbuffer api
+- graphql api
+- webserver ? TODO!
+- gui client ? TODO!
+- test apis ? TODO!
 
 ## Generate self-signed certificates
 

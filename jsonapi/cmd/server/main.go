@@ -63,6 +63,8 @@ func main() {
 	r.Handle("POST /users", private(http.HandlerFunc(userHandler.CreateUser)))
 	r.Handle("GET /users", private(http.HandlerFunc(userHandler.FindByEmail)))
 
+	// r.Handle("POST /userss", public(http.HandlerFunc(userHandler.CreateUser)))
+
 	r.Handle("POST /users/generate_token", public(http.HandlerFunc(userHandler.GetJwt)))
 
 	server := &http.Server{

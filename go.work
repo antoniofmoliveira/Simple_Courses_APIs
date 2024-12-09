@@ -9,5 +9,6 @@ use (
 	./grpc_client
 	./grpc_server
 	./jsonapi
+	./jsonapi_client
 	./proto
 )
