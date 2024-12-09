@@ -2,11 +2,13 @@
 
 ## ***in progress***
 
-very dificult to find information about flatbuffers and grpc streams
+using Fullcycle's Goexpert Course example to expand the API
 
-## serveral ways to implement the API
+very dificult to find information about flatbuffers vectors and grpc streams
 
-- using golang workspace
+## Several ways to implement the API
+
+- using golang workspace to share code between sub projects
 - use of mariadb or sqlite databases
 
 - generating certificates
